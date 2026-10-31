@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+# Regenerate the examples' state diagrams from their compiled definitions:
+# docs/diagrams/<name>.puml (PlantUML source, from `voucha graph --plantuml`)
+# and docs/diagrams/<name>.svg (rendered with PlantUML over Graphviz), then
+# the README's and the site's embedded copies. Rerun after changing a definition.
+#
+# Needs Graphviz: `dot` on PATH, or GRAPHVIZ_DOT pointing at it.
+set -e
+cd "$(dirname "$0")/.."
+if [ -z "${GRAPHVIZ_DOT:-}" ] && ! command -v dot >/dev/null 2>&1; then
+  echo "render-diagrams: Graphviz 'dot' not found; install it or set GRAPHVIZ_DOT" >&2; exit 1
+fi
+for pair in "order:voucha.example.order/app" "sepa:voucha.profiles.file-batch-transaction/definition"; do
+  name=${pair%%:*}; var=${pair#*:}
+  bin/voucha graph "$var" --plantuml 2>/dev/null > "docs/diagrams/$name.puml"
+  echo "wrote docs/diagrams/$name.puml"
+done
+clojure -J-Dorg.slf4j.simpleLogger.defaultLogLevel=warn \
+  -Sdeps '{:deps {net.sourceforge.plantuml/plantuml {:mvn/version "1.2024.8"}}}' \
+  -M -e '
+(import (net.sourceforge.plantuml SourceStringReader FileFormat FileFormatOption))
+(doseq [n ["order" "sepa"]]
+  (let [out (java.io.ByteArrayOutputStream.)]
+    (.outputImage (SourceStringReader. (slurp (str "docs/diagrams/" n ".puml"))) out (FileFormatOption. FileFormat/SVG))
+    (spit (str "docs/diagrams/" n ".svg") (.toString out "UTF-8"))
+    (println "wrote" (str "docs/diagrams/" n ".svg"))))
+(System/exit 0)'
+cp docs/diagrams/order.svg site/order.svg
+cp docs/diagrams/sepa.svg site/sepa.svg
+echo "copied to site/"

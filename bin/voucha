@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# The voucha command line. Runs from the repository root; `voucha dev` needs the
+# embedded database on the :dev alias, so every command uses it. Library logging
+# is kept to warnings so command output stays readable.
+cd "$(dirname "$0")/.." && exec clojure -J-Dorg.slf4j.simpleLogger.defaultLogLevel=warn -M:dev -m voucha.cli "$@"

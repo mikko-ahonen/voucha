@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>voucha — Transactional State Runtime</title>
+<meta name="description" content="Durable, verifiable execution of hierarchical state machines on PostgreSQL. Business processes as small pure functions; locking, retries, recovery and audit provided by the runtime.">
+<link rel="icon" href="voucha-logo.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <img src="voucha-logo.png" alt="voucha">
+    <nav class="links">
+      <a class="primary" href="https://github.com/mikko-ahonen/voucha">GitHub</a>
+      <a href="examples.html">Examples</a>
+      <a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/getting-started.md">Getting started</a>
+      <a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/intro.md">Introduction</a>
+      <a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/concepts.md">Concepts</a>
+    </nav>
+  </header>
+
+  <p>Building reliable business processes that span several systems is hard. Retry mechanisms
+  and error handling are hand-written in each service, difficult to get right, and operations and
+  testing are an afterthought.</p>
+
+  <p>voucha is an experiment in taking that burden out of application code. It keeps the process
+  state, the record of every outbound call and the policy for resolving an unknown outcome in
+  one transactional log, so that the application is reduced to small pure functions that decide
+  what should happen next. It borrows the approach of databases and the transaction processing
+  monitors of the mainframe era, modernized, on PostgreSQL.</p>
+
+  <h2>What this does for you</h2>
+  <ul>
+    <li><strong>You declare only the states and what happens on events.</strong> Locking,
+      transactions, retries, idempotency keys, crash recovery and audit are provided by the
+      runtime.</li>
+    <li><strong>The "what if the call fails halfway" code is gone.</strong> Per external call you
+      declare once whether a resend is safe, whether the other side can be asked, or whether an
+      operator must decide.</li>
+    <li><strong>A verified state machine.</strong> Unreachable states, dead ends and unhandled
+      outcomes are compile errors, not incidents. <code>voucha why</code> tells you what is
+      blocking a node.</li>
+    <li><strong>Testing is cheap.</strong> Crashes mid-transaction, calls sent but never
+      recorded, every interleaving, a hard kill of the process: the harness, fakes, simulator
+      and fault points are built in.</li>
+    <li><strong>The process can change while it runs.</strong> New work starts under the new
+      definition; work in flight finishes under the old one.</li>
+  </ul>
+
+  <h2>Try it</h2>
+<pre><code>git clone https://github.com/mikko-ahonen/voucha &amp;&amp; cd voucha
+clojure -T:build javac
+clojure -X:test
+bin/voucha dev voucha.example.batch/app</code></pre>
+  <p>Requires a JDK and the Clojure CLI. PostgreSQL is embedded for development and tests.</p>
+
+  <h2>Status</h2>
+  <p>Experimental. Implemented and tested under crash, contention and fault injection, with no
+  operating history yet. Expect interfaces to change.</p>
+
+  <footer>Apache License 2.0 · <a href="https://github.com/mikko-ahonen/voucha">github.com/mikko-ahonen/voucha</a></footer>
+</main>
+</body>
+</html>

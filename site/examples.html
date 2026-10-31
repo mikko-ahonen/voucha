@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>voucha — Examples</title>
+<meta name="description" content="Two example processes on voucha: an order and its line items in Java, and a SEPA credit-transfer file in Clojure, with their generated state diagrams.">
+<link rel="icon" href="voucha-logo.png">
+<link rel="stylesheet" href="style.css">
+<style>main { max-width: 60rem; }</style>
+</head>
+<body>
+<main>
+  <header>
+    <a href="index.html"><img src="voucha-logo.png" alt="voucha"></a>
+    <nav class="links">
+      <a href="https://github.com/mikko-ahonen/voucha">GitHub</a>
+      <a class="primary" href="examples.html">Examples</a>
+      <a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/getting-started.md">Getting started</a>
+      <a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/intro.md">Introduction</a>
+      <a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/concepts.md">Concepts</a>
+    </nav>
+  </header>
+
+  <p>Two processes ship with voucha. Both diagrams below are generated from the compiled
+  definitions by <code>voucha graph --plantuml</code> and rendered with PlantUML. States are drawn inside states: a child
+  node type's machine is drawn inside the parent state in which its instances live, and each
+  hierarchy level has its own colour. A transition label reads <code>event / effects</code>,
+  <code>^Event</code> is an event bubbled up to the parent, and <em>(guarded)</em> marks a
+  transition with a hierarchy rule.</p>
+
+  <h2>An order and its line items, in Java</h2>
+  <p>Two levels, four effects, one aggregation. Each line reserves its stock; when every line has
+  settled, the order either charges the customer and ships, or releases what was reserved and is
+  cancelled. Charging twice is the one thing that must never happen, so an unknown outcome of the
+  charge is resolved by asking the payment provider, never by charging again.</p>
+  <p class="small">Source:
+  <a href="https://github.com/mikko-ahonen/voucha/blob/main/java-src/example/OrderProfile.java">OrderProfile.java</a> (the definition),
+  <a href="https://github.com/mikko-ahonen/voucha/blob/main/java-src/example/OrderHandlers.java">OrderHandlers.java</a> (the handlers),
+  <a href="https://github.com/mikko-ahonen/voucha/blob/main/tests/voucha/order_example_test.clj">order_example_test.clj</a> (the tests).
+  Run it with <code>bin/voucha dev voucha.example.order/app</code>.</p>
+  <p class="diagram"><img src="order.svg" alt="The order example as a hierarchical state machine"></p>
+
+  <h2>A SEPA credit-transfer file, in Clojure</h2>
+  <p>A pain.001 file as a debtor bank processes it, four levels deep: control-sum validation per
+  batch, sanctions screening per transaction with a retry cycle, and per payment attempt a
+  debtor-account debit, a send over SCT Inst (asynchronous, status inquiry on an unknown outcome)
+  or SCT (synchronous), and a reversal of the debit if the rail rejects. Every term is public ISO
+  20022 and EPC vocabulary. It is the fixture for most of the test suite.</p>
+  <p class="small">Source:
+  <a href="https://github.com/mikko-ahonen/voucha/blob/main/src/voucha/profiles/file_batch_transaction.clj">file_batch_transaction.clj</a> (the definition),
+  <a href="https://github.com/mikko-ahonen/voucha/blob/main/src/voucha/example/batch.clj">batch.clj</a> (the handlers),
+  <a href="https://github.com/mikko-ahonen/voucha/blob/main/tests/voucha/example_test.clj">example_test.clj</a> (the tests).
+  Run it with <code>bin/voucha dev voucha.example.batch/app</code>.</p>
+  <p class="diagram"><img src="sepa.svg" alt="The SEPA example as a hierarchical state machine"></p>
+
+  <footer>Apache License 2.0 · <a href="https://github.com/mikko-ahonen/voucha">github.com/mikko-ahonen/voucha</a></footer>
+</main>
+
+</body>
+</html>
