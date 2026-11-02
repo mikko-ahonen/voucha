@@ -1,0 +1,93 @@
+@startuml
+hide empty description
+state "Trip" as Trip #F2F4F8 {
+  state "TRIP_NEW" as TRIP_NEW #F2F4F8
+  [*] --> TRIP_NEW
+  state "TRIP_SEARCHING" as TRIP_SEARCHING #F2F4F8
+  state "TRIP_OFFERED" as TRIP_OFFERED #F2F4F8
+  state "TRIP_AWAITING_CARD" as TRIP_AWAITING_CARD #F2F4F8
+  state "TRIP_BOOKING" as TRIP_BOOKING #F2F4F8 {
+    state "RES_NEW" as RES_NEW #DDE9FF
+    [*] --> RES_NEW
+    state "RES_BOOKING" as RES_BOOKING #DDE9FF
+    state "RES_BOOKED" as RES_BOOKED #DDE9FF
+    state "RES_FAILED" as RES_FAILED #DDE9FF
+    state "RES_CANCELLING" as RES_CANCELLING #DDE9FF
+    state "RES_CANCELLED" as RES_CANCELLED #DDE9FF
+    state "RES_CONFIRMED" as RES_CONFIRMED #DDE9FF
+    RES_CONFIRMED --> [*]
+    state "RES_CLOSED" as RES_CLOSED #DDE9FF
+    RES_CLOSED --> [*]
+    RES_NEW --> RES_BOOKING : BookCommanded / reservation.book (guarded)
+    RES_NEW --> RES_CLOSED : CloseCommanded ^ReservationSettled (guarded)
+    RES_BOOKING --> RES_BOOKED : ReservationConfirmed ^ReservationBooked
+    RES_BOOKING --> RES_FAILED : ReservationRejected ^ReservationFailed
+    RES_BOOKED --> RES_CANCELLING : CancelCommanded / reservation.cancel (guarded)
+    RES_BOOKED --> RES_CONFIRMED : ConfirmCommanded ^ReservationSettled (guarded)
+    RES_FAILED --> RES_BOOKING : BookCommanded / reservation.book (guarded)
+    RES_FAILED --> RES_CANCELLED : CancelCommanded ^ReservationReleased (guarded)
+    RES_FAILED --> RES_CLOSED : CloseCommanded ^ReservationSettled (guarded)
+    RES_CANCELLING --> RES_CANCELLED : ReservationCancelConfirmed ^ReservationReleased
+    RES_CANCELLING --> RES_CANCELLED : ReservationCancelFailed ^ReservationReleased
+    RES_CANCELLED --> RES_BOOKING : BookCommanded / reservation.book (guarded)
+    RES_CANCELLED --> RES_CLOSED : CloseCommanded ^ReservationSettled (guarded)
+  }
+  state "TRIP_BOOKING_FAILED" as TRIP_BOOKING_FAILED #F2F4F8
+  state "TRIP_CHARGING" as TRIP_CHARGING #F2F4F8
+  state "TRIP_CONFIRMING" as TRIP_CONFIRMING #F2F4F8
+  state "TRIP_CONFIRMED" as TRIP_CONFIRMED #F2F4F8
+  TRIP_CONFIRMED --> [*]
+  state "TRIP_REVERSING" as TRIP_REVERSING #F2F4F8
+  state "TRIP_RECORDING_FAILURE" as TRIP_RECORDING_FAILURE #F2F4F8
+  state "TRIP_RETRY_WAIT" as TRIP_RETRY_WAIT #F2F4F8
+  state "TRIP_CLOSING_FAILED" as TRIP_CLOSING_FAILED #F2F4F8
+  state "TRIP_NOTIFYING_FAILURE" as TRIP_NOTIFYING_FAILURE #F2F4F8
+  state "TRIP_FAILED" as TRIP_FAILED #F2F4F8
+  TRIP_FAILED --> [*]
+  state "TRIP_CANCELLING" as TRIP_CANCELLING #F2F4F8
+  state "TRIP_CLOSING_CANCELLED" as TRIP_CLOSING_CANCELLED #F2F4F8
+  state "TRIP_NOTIFYING_CANCELLATION" as TRIP_NOTIFYING_CANCELLATION #F2F4F8
+  state "TRIP_CANCELLED" as TRIP_CANCELLED #F2F4F8
+  TRIP_CANCELLED --> [*]
+  TRIP_NEW --> TRIP_SEARCHING : ReservationRequested / inventory.search
+  TRIP_SEARCHING --> TRIP_OFFERED : AlternativesPackaged / client.offer
+  TRIP_SEARCHING --> TRIP_CANCELLING : NothingToBook / record.update
+  TRIP_SEARCHING --> TRIP_CANCELLING : SearchFailed / record.update
+  TRIP_OFFERED --> TRIP_AWAITING_CARD : SelectionMade / client.card-request
+  TRIP_OFFERED --> TRIP_CANCELLING : OfferCancelled / record.update
+  TRIP_OFFERED --> TRIP_CANCELLING : OfferExpired / record.update
+  TRIP_AWAITING_CARD --> TRIP_BOOKING : CardProvided
+  TRIP_AWAITING_CARD --> TRIP_CANCELLING : CardRequestCancelled / record.update
+  TRIP_AWAITING_CARD --> TRIP_CANCELLING : CardRequestExpired / record.update
+  TRIP_BOOKING --> TRIP_BOOKING : CardUpdated
+  TRIP_BOOKING --> TRIP_BOOKING : ReservationBooked
+  TRIP_BOOKING --> TRIP_BOOKING_FAILED : ReservationFailed
+  TRIP_BOOKING --> TRIP_CHARGING : AllReservationsBooked / card.charge (auto, guarded)
+  TRIP_BOOKING_FAILED --> TRIP_BOOKING_FAILED : CardUpdated
+  TRIP_BOOKING_FAILED --> TRIP_BOOKING_FAILED : ReservationBooked
+  TRIP_BOOKING_FAILED --> TRIP_BOOKING_FAILED : ReservationFailed
+  TRIP_BOOKING_FAILED --> TRIP_REVERSING : AllReservationsSettled (auto, guarded)
+  TRIP_CHARGING --> TRIP_CONFIRMING : CardCharged
+  TRIP_CHARGING --> TRIP_REVERSING : CardDeclined
+  TRIP_CONFIRMING --> TRIP_CONFIRMING : ReservationSettled
+  TRIP_CONFIRMING --> TRIP_CONFIRMED : AllReservationsConfirmed (auto, guarded)
+  TRIP_REVERSING --> TRIP_REVERSING : ReservationReleased
+  TRIP_REVERSING --> TRIP_RECORDING_FAILURE : AllReservationsReleased / record.update (auto, guarded)
+  TRIP_RECORDING_FAILURE --> TRIP_RETRY_WAIT : RecordUpdateFailed
+  TRIP_RECORDING_FAILURE --> TRIP_RETRY_WAIT : RecordUpdated
+  TRIP_RETRY_WAIT --> TRIP_AWAITING_CARD : RetryPayment / client.card-request
+  TRIP_RETRY_WAIT --> TRIP_BOOKING : RetryBooking
+  TRIP_RETRY_WAIT --> TRIP_CLOSING_FAILED : BookingGaveUp
+  TRIP_RETRY_WAIT --> TRIP_CLOSING_FAILED : PaymentGaveUp
+  TRIP_CLOSING_FAILED --> TRIP_CLOSING_FAILED : ReservationSettled
+  TRIP_CLOSING_FAILED --> TRIP_NOTIFYING_FAILURE : ClosedAfterFailure / client.notify (auto, guarded)
+  TRIP_NOTIFYING_FAILURE --> TRIP_FAILED : ClientNotified
+  TRIP_NOTIFYING_FAILURE --> TRIP_FAILED : NotifyFailed
+  TRIP_CANCELLING --> TRIP_CLOSING_CANCELLED : RecordUpdateFailed
+  TRIP_CANCELLING --> TRIP_CLOSING_CANCELLED : RecordUpdated
+  TRIP_CLOSING_CANCELLED --> TRIP_CLOSING_CANCELLED : ReservationSettled
+  TRIP_CLOSING_CANCELLED --> TRIP_NOTIFYING_CANCELLATION : ClosedAfterCancellation / client.notify (auto, guarded)
+  TRIP_NOTIFYING_CANCELLATION --> TRIP_CANCELLED : ClientNotified
+  TRIP_NOTIFYING_CANCELLATION --> TRIP_CANCELLED : NotifyFailed
+}
+@enduml

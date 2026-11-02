@@ -1,0 +1,3 @@
+DROP FUNCTION voucha.submit_event(TEXT, TEXT, TEXT, JSONB, TEXT, TEXT, TEXT, TEXT, JSONB, TEXT);
+--;;
+DROP FUNCTION voucha.create_tree(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT);

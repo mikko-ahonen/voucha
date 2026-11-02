@@ -1,0 +1,3 @@
+DROP FUNCTION voucha.commit_transition(TEXT, JSONB, JSONB, BOOLEAN, BOOLEAN, JSONB, JSONB, JSONB, JSONB, JSONB, JSONB);
+--;;
+DROP FUNCTION voucha.claim_event(TEXT[]);
