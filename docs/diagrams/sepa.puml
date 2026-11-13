@@ -1,0 +1,108 @@
+@startuml
+hide empty description
+state "File" as File #F2F4F8 {
+  state "FILE_NEW" as FILE_NEW #F2F4F8
+  [*] --> FILE_NEW
+  state "WRITING_RECEIVE_FILE" as WRITING_RECEIVE_FILE #F2F4F8
+  state "FILE_PROCESS_BATCHES" as FILE_PROCESS_BATCHES #F2F4F8
+  state "FILE_PROCESS_BATCH" as FILE_PROCESS_BATCH #F2F4F8 {
+    state "BATCH_NEW" as BATCH_NEW #DDE9FF
+    [*] --> BATCH_NEW
+    state "BATCH_VALIDATING" as BATCH_VALIDATING #DDE9FF
+    state "BATCH_SCREEN_TRANSACTIONS" as BATCH_SCREEN_TRANSACTIONS #DDE9FF
+    state "BATCH_PROCESSING" as BATCH_PROCESSING #DDE9FF {
+      state "TX_NEW" as TX_NEW #DDF3E1
+      [*] --> TX_NEW
+      state "TX_VALIDATING" as TX_VALIDATING #DDF3E1
+      state "TX_VALIDATED" as TX_VALIDATED #DDF3E1
+      state "TX_SCREENING" as TX_SCREENING #DDF3E1
+      state "TX_SCREEN_RETRY_WAIT" as TX_SCREEN_RETRY_WAIT #DDF3E1
+      state "TX_SCREENED" as TX_SCREENED #DDF3E1
+      state "TX_PAYING" as TX_PAYING #DDF3E1 {
+        state "ATTEMPT_NEW" as ATTEMPT_NEW #FFF0D6
+        [*] --> ATTEMPT_NEW
+        state "ATTEMPT_DEBITING" as ATTEMPT_DEBITING #FFF0D6
+        state "ATTEMPT_DEBITED" as ATTEMPT_DEBITED #FFF0D6
+        state "ATTEMPT_INST_SENDING" as ATTEMPT_INST_SENDING #FFF0D6
+        state "ATTEMPT_INST_WAITING" as ATTEMPT_INST_WAITING #FFF0D6
+        state "ATTEMPT_SCT_SUBMITTING" as ATTEMPT_SCT_SUBMITTING #FFF0D6
+        state "ATTEMPT_REVERSING" as ATTEMPT_REVERSING #FFF0D6
+        state "ATTEMPT_SUCCEEDED" as ATTEMPT_SUCCEEDED #FFF0D6
+        ATTEMPT_SUCCEEDED --> [*]
+        state "ATTEMPT_FAILED" as ATTEMPT_FAILED #FFF0D6
+        ATTEMPT_FAILED --> [*]
+        ATTEMPT_NEW --> ATTEMPT_DEBITING : AttemptCommanded / account.debit (guarded)
+        ATTEMPT_DEBITING --> ATTEMPT_DEBITED : AccountDebited
+        ATTEMPT_DEBITING --> ATTEMPT_FAILED : AccountDebitFailed ^AttemptFailed
+        ATTEMPT_DEBITED --> ATTEMPT_INST_SENDING : AttemptSendInst / rail.inst.send
+        ATTEMPT_DEBITED --> ATTEMPT_SCT_SUBMITTING : AttemptSubmitSct / rail.sct.submit
+        ATTEMPT_INST_SENDING --> ATTEMPT_INST_WAITING : InstPaymentSent
+        ATTEMPT_INST_WAITING --> ATTEMPT_REVERSING : InstPaymentRejected / account.reverse
+        ATTEMPT_INST_WAITING --> ATTEMPT_SUCCEEDED : InstPaymentAccepted ^AttemptSucceeded
+        ATTEMPT_SCT_SUBMITTING --> ATTEMPT_REVERSING : SctPaymentRejected / account.reverse
+        ATTEMPT_SCT_SUBMITTING --> ATTEMPT_SUCCEEDED : SctPaymentAccepted ^AttemptSucceeded
+        ATTEMPT_REVERSING --> ATTEMPT_FAILED : DebitReversalFailed ^AttemptFailed
+        ATTEMPT_REVERSING --> ATTEMPT_FAILED : DebitReversed ^AttemptFailed
+      }
+      state "TX_PAY_RETRY_WAIT" as TX_PAY_RETRY_WAIT #DDF3E1
+      state "TX_COMPLETED" as TX_COMPLETED #DDF3E1
+      TX_COMPLETED --> [*]
+      state "TX_FAILED" as TX_FAILED #DDF3E1
+      TX_FAILED --> [*]
+      TX_NEW --> TX_VALIDATING : TransactionStartCommanded
+      TX_VALIDATING --> TX_VALIDATED : TransactionValidated
+      TX_VALIDATING --> TX_FAILED : TransactionValidationFailed ^TransactionRejected
+      TX_VALIDATED --> TX_SCREENING : TransactionScreeningStart / screening.check
+      TX_SCREENING --> TX_SCREEN_RETRY_WAIT : TransactionScreeningFailed
+      TX_SCREENING --> TX_SCREENED : TransactionScreeningCleared ^TransactionReady
+      TX_SCREENING --> TX_FAILED : TransactionCancelled ^TransactionRejected
+      TX_SCREEN_RETRY_WAIT --> TX_SCREENING : TransactionScreeningRetry / screening.check
+      TX_SCREEN_RETRY_WAIT --> TX_FAILED : TransactionCancelled ^TransactionRejected
+      TX_SCREEN_RETRY_WAIT --> TX_FAILED : TransactionScreeningGaveUp ^TransactionRejected
+      TX_SCREENED --> TX_PAYING : TransactionPayCommanded (guarded)
+      TX_PAYING --> TX_PAY_RETRY_WAIT : AttemptFailed
+      TX_PAYING --> TX_COMPLETED : AttemptSucceeded ^TransactionPaid
+      TX_PAY_RETRY_WAIT --> TX_PAYING : TransactionRetry (guarded)
+      TX_PAY_RETRY_WAIT --> TX_FAILED : TransactionGaveUp ^TransactionFailedSettled
+    }
+    state "BATCH_PAY_TRANSACTIONS" as BATCH_PAY_TRANSACTIONS #DDE9FF
+    state "BATCH_COMPLETED" as BATCH_COMPLETED #DDE9FF
+    BATCH_COMPLETED --> [*]
+    state "BATCH_REJECTED" as BATCH_REJECTED #DDE9FF
+    BATCH_REJECTED --> [*]
+    BATCH_NEW --> BATCH_VALIDATING : BatchStartCommanded (guarded)
+    BATCH_VALIDATING --> BATCH_SCREEN_TRANSACTIONS : BatchValidated
+    BATCH_VALIDATING --> BATCH_REJECTED : BatchRejected ^BatchSettled
+    BATCH_SCREEN_TRANSACTIONS --> BATCH_SCREEN_TRANSACTIONS : TransactionReady
+    BATCH_SCREEN_TRANSACTIONS --> BATCH_SCREEN_TRANSACTIONS : TransactionRejected
+    BATCH_SCREEN_TRANSACTIONS --> BATCH_PROCESSING : ScreeningPending (auto)
+    BATCH_SCREEN_TRANSACTIONS --> BATCH_PAY_TRANSACTIONS : AllTransactionsScreened (auto, guarded)
+    BATCH_SCREEN_TRANSACTIONS --> BATCH_PAY_TRANSACTIONS : TransactionFailedSettled
+    BATCH_SCREEN_TRANSACTIONS --> BATCH_PAY_TRANSACTIONS : TransactionPaid
+    BATCH_PROCESSING --> BATCH_SCREEN_TRANSACTIONS : TransactionReady
+    BATCH_PROCESSING --> BATCH_SCREEN_TRANSACTIONS : TransactionRejected
+    BATCH_PROCESSING --> BATCH_PAY_TRANSACTIONS : TransactionFailedSettled
+    BATCH_PROCESSING --> BATCH_PAY_TRANSACTIONS : TransactionPaid
+    BATCH_PAY_TRANSACTIONS --> BATCH_PROCESSING : PaymentsPending (auto)
+    BATCH_PAY_TRANSACTIONS --> BATCH_PAY_TRANSACTIONS : TransactionFailedSettled
+    BATCH_PAY_TRANSACTIONS --> BATCH_PAY_TRANSACTIONS : TransactionPaid
+    BATCH_PAY_TRANSACTIONS --> BATCH_PAY_TRANSACTIONS : TransactionReady
+    BATCH_PAY_TRANSACTIONS --> BATCH_PAY_TRANSACTIONS : TransactionRejected
+    BATCH_PAY_TRANSACTIONS --> BATCH_COMPLETED : AllTransactionsSettled ^BatchSettled (auto, guarded)
+  }
+  state "FILE_BATCHES_PROCESSED" as FILE_BATCHES_PROCESSED #F2F4F8
+  state "FILE_COMPLETED" as FILE_COMPLETED #F2F4F8
+  FILE_COMPLETED --> [*]
+  state "FILE_PERMANENT_FAILURE" as FILE_PERMANENT_FAILURE #F2F4F8
+  FILE_PERMANENT_FAILURE --> [*]
+  FILE_NEW --> WRITING_RECEIVE_FILE : FileReceived / file.writeReceive
+  WRITING_RECEIVE_FILE --> FILE_PROCESS_BATCHES : ReceiveFileWritten
+  WRITING_RECEIVE_FILE --> FILE_PERMANENT_FAILURE : ReceiveFileWriteFailed
+  FILE_PROCESS_BATCHES --> FILE_PROCESS_BATCHES : BatchSettled
+  FILE_PROCESS_BATCHES --> FILE_PROCESS_BATCH : BatchesPending (auto)
+  FILE_PROCESS_BATCHES --> FILE_BATCHES_PROCESSED : AllBatchesProcessed / file.writeResult (auto, guarded)
+  FILE_PROCESS_BATCH --> FILE_PROCESS_BATCHES : BatchSettled
+  FILE_BATCHES_PROCESSED --> FILE_COMPLETED : ResultFileWritten
+  FILE_BATCHES_PROCESSED --> FILE_PERMANENT_FAILURE : ResultFileWriteFailed
+}
+@enduml

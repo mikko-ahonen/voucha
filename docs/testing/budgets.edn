@@ -1,0 +1,20 @@
+;; Performance budgets (test plan T6). `tests/voucha/budget_test.clj` gates the suite on
+;; these; `clojure -X:test voucha.bench/record!` appends precise numbers to the ledger.
+;;
+;; Measured in-process against an embedded PostgreSQL, *inside the test suite* -- a cold
+;; JVM, other tests before and after. Budgets are baselines under exactly those
+;; conditions, with a generous tolerance: the gate exists to catch gross regressions,
+;; not drift (drift is what the ledger's trend is for).
+;;
+;; Baselines from 2026-10-31, after the harness was put behind the production pool: the
+;; embedded server's own datasource had opened a connection per transaction, 3 ms each,
+;; two per event, which the perf scenarios (docs/design/performance.md) found standing in
+;; for the kernel's cost; the 2026-10-25 baselines (36, 36, 14, 40, 160) measured that.
+;; Raised again the same day after the claim was folded into the kernel transaction and the
+;; redundant reads removed (11 statements per event, from 16): throughput 228, fan-out 153.
+;; And the backlog drain after the claim-order index removed the quadratic claim: 772.
+{:throughput-events-per-s {:budget 180 :tolerance 0.5 :unit :events-per-s}
+ :fanout-events-per-s     {:budget 180 :tolerance 0.5 :unit :events-per-s}
+ :backlog-events-per-s    {:budget 600 :tolerance 0.5 :unit :events-per-s}
+ :invariant-check-ms      {:budget 30  :tolerance 0.5 :unit :ms}
+ :replay-check-ms         {:budget 110 :tolerance 0.5 :unit :ms}}

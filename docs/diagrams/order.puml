@@ -1,0 +1,51 @@
+@startuml
+hide empty description
+state "Order" as Order #F2F4F8 {
+  state "ORDER_NEW" as ORDER_NEW #F2F4F8
+  [*] --> ORDER_NEW
+  state "ORDER_VALIDATING" as ORDER_VALIDATING #F2F4F8
+  state "ORDER_RESERVE_ITEMS" as ORDER_RESERVE_ITEMS #F2F4F8
+  state "ORDER_RESERVING" as ORDER_RESERVING #F2F4F8 {
+    state "ITEM_NEW" as ITEM_NEW #DDE9FF
+    [*] --> ITEM_NEW
+    state "ITEM_RESERVING" as ITEM_RESERVING #DDE9FF
+    state "ITEM_RESERVED" as ITEM_RESERVED #DDE9FF
+    ITEM_RESERVED --> [*]
+    state "ITEM_UNAVAILABLE" as ITEM_UNAVAILABLE #DDE9FF
+    ITEM_UNAVAILABLE --> [*]
+    ITEM_NEW --> ITEM_RESERVING : ItemReserveCommanded / inventory.reserve (guarded)
+    ITEM_RESERVING --> ITEM_RESERVED : ItemReserved ^ItemSettled
+    ITEM_RESERVING --> ITEM_UNAVAILABLE : ItemOutOfStock ^ItemSettled
+  }
+  state "ORDER_CHARGING" as ORDER_CHARGING #F2F4F8
+  state "ORDER_CHARGE_RETRY_WAIT" as ORDER_CHARGE_RETRY_WAIT #F2F4F8
+  state "ORDER_SHIPPING" as ORDER_SHIPPING #F2F4F8
+  state "ORDER_RELEASING" as ORDER_RELEASING #F2F4F8
+  state "ORDER_COMPLETED" as ORDER_COMPLETED #F2F4F8
+  ORDER_COMPLETED --> [*]
+  state "ORDER_CANCELLED" as ORDER_CANCELLED #F2F4F8
+  ORDER_CANCELLED --> [*]
+  state "ORDER_REJECTED" as ORDER_REJECTED #F2F4F8
+  ORDER_REJECTED --> [*]
+  state "ORDER_SHIPPING_FAILED" as ORDER_SHIPPING_FAILED #F2F4F8
+  ORDER_SHIPPING_FAILED --> [*]
+  ORDER_NEW --> ORDER_VALIDATING : OrderPlaced
+  ORDER_VALIDATING --> ORDER_RESERVE_ITEMS : OrderValid
+  ORDER_VALIDATING --> ORDER_REJECTED : OrderRejected
+  ORDER_RESERVE_ITEMS --> ORDER_RESERVE_ITEMS : ItemSettled
+  ORDER_RESERVE_ITEMS --> ORDER_RESERVING : ItemsPending (auto)
+  ORDER_RESERVE_ITEMS --> ORDER_CHARGING : AllItemsReserved / payment.charge (auto, guarded)
+  ORDER_RESERVE_ITEMS --> ORDER_RELEASING : SomeItemsUnavailable / inventory.release (auto, guarded)
+  ORDER_RESERVING --> ORDER_RESERVE_ITEMS : ItemSettled
+  ORDER_CHARGING --> ORDER_CHARGE_RETRY_WAIT : PaymentFailed
+  ORDER_CHARGING --> ORDER_SHIPPING : PaymentCharged / shipping.dispatch
+  ORDER_CHARGING --> ORDER_RELEASING : OrderCancelRequested / inventory.release
+  ORDER_CHARGE_RETRY_WAIT --> ORDER_CHARGING : ChargeRetry / payment.charge
+  ORDER_CHARGE_RETRY_WAIT --> ORDER_RELEASING : ChargeGaveUp / inventory.release
+  ORDER_CHARGE_RETRY_WAIT --> ORDER_RELEASING : OrderCancelRequested / inventory.release
+  ORDER_SHIPPING --> ORDER_COMPLETED : OrderShipped
+  ORDER_SHIPPING --> ORDER_SHIPPING_FAILED : ShippingFailed
+  ORDER_RELEASING --> ORDER_CANCELLED : StockReleaseFailed
+  ORDER_RELEASING --> ORDER_CANCELLED : StockReleased
+}
+@enduml

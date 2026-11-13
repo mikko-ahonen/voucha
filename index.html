@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>voucha — Transactional State Runtime</title>
+<meta name="description" content="Hierarchical transactional state machines for Java and Clojure, on PostgreSQL. Small pure functions per transition; locking, retries, recovery, audit and proof provided by the runtime.">
+<link rel="icon" href="voucha-logo.png">
+<link rel="stylesheet" href="style.css">
+<script defer data-domain="voucha.net" src="https://p.voucha.net/js/script.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="brand" href="#top">voucha</a>
+  <a href="#what">What</a>
+  <a href="#benefits">Benefits</a>
+  <a href="#examples">Examples</a>
+  <a href="#start">Start</a>
+  <a href="#contact">Contact</a>
+  <a class="primary" href="https://github.com/mikko-ahonen/voucha">GitHub</a>
+</nav>
+
+<main id="top">
+  <header>
+    <img src="voucha-logo.png" alt="voucha — transactional state runtime">
+    <p class="tagline">Hierarchical transactional state machines for Java and Clojure, on PostgreSQL.</p>
+    <p class="actions">
+      <a class="button primary" href="https://github.com/mikko-ahonen/voucha">View on GitHub</a>
+      <a class="button" href="#start">Get started</a>
+    </p>
+  </header>
+
+  <section id="what">
+    <h2>What it is</h2>
+    <p>Business processes that span several systems fail halfway. The retries, the recovery and the
+    audit trail are hand-written in each service, hard to get right, and tested last.</p>
+    <p>voucha takes that out of application code. Declare the process as nested state machines,
+    write a small pure function per transition, and the runtime executes it: one event, one
+    database transaction, one checkpoint. Calls to other systems are recorded in that transaction
+    and made after it commits, and the policy you declared per call decides what an unknown
+    outcome means.</p>
+  </section>
+
+  <section id="benefits">
+    <h2>Benefits</h2>
+    <div class="cards">
+      <div><h3>Declare, don't plumb</h3><p>States and events are yours. Locking, transactions, retries, idempotency keys, crash recovery and audit are the runtime's.</p></div>
+      <div><h3>No halfway failures</h3><p>Per external call, declare once whether a resend is safe, the other side can be asked, or an operator must decide.</p></div>
+      <div><h3>Mistakes are compile errors</h3><p>Unreachable states, dead ends, unhandled outcomes and rules that can never hold are caught before anything runs.</p></div>
+      <div><h3>Proven, not just tested</h3><p>The inductive invariant is generated from the definition. The examples are proven with their business invariants, no hand-written lemma.</p></div>
+      <div><h3>SQL is the interface</h3><p>Submit events from your own transaction. Carry out effects as a participant, work and report in one transaction, from any language.</p></div>
+      <div><h3>Operable</h3><p><code>voucha why</code> names what blocks a node. Interventions are events with an operator and a reason. Every transition replays.</p></div>
+      <div><h3>Testing built in</h3><p>Harness, scripted fakes, a simulator over every interleaving, an invariant oracle, fault points, and models for P, TLC and Apalache.</p></div>
+      <div><h3>Change it while it runs</h3><p>New work starts under the new definition. Work in flight finishes under the one it started with.</p></div>
+    </div>
+  </section>
+
+  <section id="examples">
+    <h2>Examples</h2>
+    <div class="example">
+      <h3>An order and its line items <span class="small">Java</span></h3>
+      <p>Two levels, four effects, a decision state, a bounded retry. Charging twice must never
+      happen, so an unknown charge outcome is resolved by asking the provider, never by charging again.
+      <a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/examples/order.md">Walkthrough</a></p>
+      <p class="diagram"><img src="order.svg" alt="The order example as a hierarchical state machine"></p>
+    </div>
+    <div class="example">
+      <h3>A SEPA payment file <span class="small">Clojure</span></h3>
+      <p>Four levels: a pain.001 file, its batches, their transactions, and per transaction the
+      debit, the send over SCT Inst or SCT, and the reversal if the rail rejects.
+      <a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/examples/sepa.md">Walkthrough</a></p>
+      <p class="diagram"><img src="sepa.svg" alt="The SEPA example as a hierarchical state machine"></p>
+    </div>
+    <div class="example">
+      <h3>A travel booking <span class="small">Clojure, from OMG's BPMN 2.0 by Example</span></h3>
+      <p>The standard's own saga, transcribed: a flight and a hotel booked and charged, the client's
+      replies as callbacks with 24-hour limits, compensation through the reservations, two retry limits.
+      <a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/examples/travel.md">Walkthrough</a></p>
+    </div>
+  </section>
+
+  <section id="start">
+    <h2>Get started</h2>
+<pre><code>git clone https://github.com/mikko-ahonen/voucha &amp;&amp; cd voucha
+clojure -T:build javac
+clojure -X:test
+bin/voucha dev voucha.example.order/app
+bin/voucha verify voucha.example.order/app</code></pre>
+    <p>A JDK and the Clojure CLI; PostgreSQL is embedded for development and tests.</p>
+    <ul class="links">
+      <li><a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/getting-started.md">Getting started</a></li>
+      <li><a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/concepts.md">Concepts</a></li>
+      <li><a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/intro.md">Introduction</a></li>
+      <li><a href="https://github.com/mikko-ahonen/voucha/blob/main/docs/reference/">Reference</a></li>
+    </ul>
+    <p class="small">Experimental: tested under crash, contention and fault injection, proven at the
+    default bounds and SEPA at bounds of three, no operating history yet. Expect interfaces to change.</p>
+  </section>
+
+  <section id="contact">
+    <h2>Contact</h2>
+    <p><a href="mailto:mikko@voucha.net">mikko@voucha.net</a> for running voucha in production,
+    consulting, or reliable systems in general.<br>
+    Issues and pull requests: <a href="https://github.com/mikko-ahonen/voucha">github.com/mikko-ahonen/voucha</a>.</p>
+  </section>
+
+  <footer>Apache License 2.0</footer>
+</main>
+</body>
+</html>

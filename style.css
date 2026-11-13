@@ -1,0 +1,40 @@
+:root { --fg: #1b1b1b; --bg: #fdfdfb; --muted: #5a5a5a; --accent: #2a5db0; --line: #e4e2dc; --card: rgba(127,127,127,0.07); }
+@media (prefers-color-scheme: dark) {
+  :root { --fg: #e8e6e1; --bg: #15161a; --muted: #a7a49d; --accent: #8ab4ff; --line: #2b2d33; --card: rgba(255,255,255,0.05); }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 3.5rem; }
+body { margin: 0; font: 17px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+       color: var(--fg); background: var(--bg); }
+nav.top { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center;
+          gap: 0.25rem 1.25rem; padding: 0.6rem 1.25rem; background: var(--bg);
+          border-bottom: 1px solid var(--line); font-size: 0.95rem; }
+nav.top a { color: var(--fg); }
+nav.top a:hover { color: var(--accent); text-decoration: none; }
+nav.top .brand { font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 0.5rem; }
+nav.top .primary { margin-left: auto; background: var(--accent); color: #fff; border-radius: 6px; padding: 0.3rem 0.8rem; }
+main { max-width: 52rem; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+header { text-align: center; margin-bottom: 1rem; }
+header img { width: 440px; max-width: 90%; height: auto; }
+.tagline { color: var(--muted); margin: 1.25rem 0 0; font-size: 1.15rem; }
+.actions { margin: 1.5rem 0 0; display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+.button { border: 1px solid var(--line); border-radius: 6px; padding: 0.5rem 1rem; color: var(--fg); }
+.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.button:hover { text-decoration: none; border-color: var(--accent); }
+section { margin-top: 3rem; }
+h2 { font-size: 1.4rem; margin: 0 0 0.75rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.35rem; }
+p { margin: 0 0 0.9rem; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.9rem; }
+.cards div { background: var(--card); border-radius: 8px; padding: 1rem 1.1rem; }
+.cards p { margin: 0; font-size: 0.95rem; color: var(--muted); }
+.example { margin-top: 1.5rem; }
+.example h3 .small { font-weight: 400; margin-left: 0.5rem; }
+pre { background: var(--card); border-radius: 6px; padding: 0.9rem 1rem; overflow-x: auto; font-size: 0.9rem; line-height: 1.5; }
+ul.links { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
+footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; text-align: center; }
+.diagram { background: #fff; border-radius: 6px; padding: 0.5rem; overflow-x: auto; margin: 0; }
+.diagram img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+.small { font-size: 0.9rem; color: var(--muted); }

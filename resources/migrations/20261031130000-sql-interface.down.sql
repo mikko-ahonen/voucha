@@ -1,0 +1,11 @@
+DROP SCHEMA voucha CASCADE;
+--;;
+DROP TABLE effect_report;
+--;;
+DROP INDEX ix_effect_instance_participant;
+--;;
+ALTER TABLE effect_instance DROP COLUMN claimed_by;
+--;;
+ALTER TABLE effect_instance DROP COLUMN participant;
+--;;
+ALTER TABLE execution_artifact DROP COLUMN catalog;
